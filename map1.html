@@ -1,30 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
     <title>US COVID-19 Rates Choropleth, 2020</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-    <div id="map1" class="map"></div>
-    <div class="info-panel">
-        <h1>US COVID-19 Infection Rates, 2020</h1>
-        <p>Choropleth map showing cases per 100k population by state. Hover for details.</p>
-        <p><strong>Users:</strong> Public health analysts, policymakers.</p>
-        <p><strong>Data:</strong> US COVID-19 2020 dataset (NY Times/Johns Hopkins), simplified GeoJSON.</p>
-    </div>
+    <div id='title'>US COVID-19 Infection Rates</div>
+    <div id='subtitle'>Cases per 1,000 | 2020</div>
+    <div id='map'></div>
+    <div id='legend'></div>
 
     <script src="js/main.js"></script>
     <script>
-        // Load map1-specific layer
-        var map1 = L.map('map1').setView([39.8283, -98.5795], 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map1);
-        loadChoropleth(map1, 'assets/us-covid-2020-rates.geojson');
+        mapboxgl.accessToken = 'pk.eyJ1IjoiYW1hcnR5YWNoYXViZSIsImEiOiJjbWhkeWRlczYwOGQxMnZwdjJyYWwydmhoIn0.gWwGNyVcD1xoO5v2UXrJ0Q';
+        
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [-98.5795, 39.8283],
+            zoom: 3.5
+        });
+
+        map.on('load', () => {
+            map.addSource('covid-rates', {
+                'type': 'geojson',
+                'data': 'assets/us-covid-2020-rates.geojson'
+            });
+            
+            map.addLayer({
+                'id': 'covid-rates-fill',
+                'type': 'fill',
+                'source': 'covid-rates',
+                'paint': {
+                    'fill-color': [
+                        'interpolate', ['linear'], ['get', 'rate_per_100k'],
+                        0, '#FFEDA0',
+                        100, '#FED976',
+                        500, '#FEB24C',
+                        1000, '#FD8D3C',
+                        2000, '#FC4E2A',
+                        4000, '#E31A1C',
+                        6000, '#BD0026',
+                        8000, '#800026'
+                    ],
+                    'fill-opacity': 0.8,
+                    'fill-outline-color': 'white'
+                }
+            });
+
+            map.on('click', 'covid-rates-fill', (e) => {
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(`
+                        <strong>${e.features[0].properties.NAME}</strong><br>
+                        Rate per 1k: ${e.features[0].properties.rate_per_100k.toFixed(1)}<br>
+                        Total cases: ${e.features[0].properties.total_cases?.toLocaleString() || 'N/A'}
+                    `)
+                    .addTo(map);
+            });
+            
+            map.on('mouseenter', 'covid-rates-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', 'covid-rates-fill', () => { map.getCanvas().style.cursor = ''; });
+            
+            addChoroplethLegend();
+        });
     </script>
 </body>
 </html>
