@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US COVID-19 Cases Proportional Symbols, 2020</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+    <div id="map2" class="map"></div>
+    <div class="info-panel">
+        <h1>US COVID-19 Total Cases, 2020</h1>
+        <p>Proportional symbols sized by total confirmed cases by state. Click for details.</p>
+        <p><strong>Users:</strong> Epidemiologists, researchers.</p>
+        <p><strong>Data:</strong> US COVID-2020 counts dataset (NY Times/Johns Hopkins), simplified GeoJSON.</p>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Load map2-specific layer
+        var map2 = L.map('map2').setView([39.8283, -98.5795], 4);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+        }).addTo(map2);
+        loadProportionalSymbols(map2, 'assets/us-covid-2020-counts.geojson');
+    </script>
+</body>
+</html>
