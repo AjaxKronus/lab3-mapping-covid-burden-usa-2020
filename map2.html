@@ -2,70 +2,169 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>US COVID-19 Cases Proportional Symbols, 2020</title>
+    <title>COVID-19 Cases by County</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        #title {
+            position: absolute;
+            top: 0; left: 0;
+            margin-top: 20px;
+            margin-left: 20px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 25pt;
+            color: white;
+        }
+        
+        #subtitle {
+            position: absolute;
+            top: 0; left: 0;
+            margin-top: 70px;
+            margin-left: 20px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 15pt;
+            color: white;
+        }
+        
+        #legend {
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 130px;
+            background: #fff;
+            margin-right: 20px;
+            margin-bottom: 40px;
+            padding: 10px 20px 10px 10px;
+            border-radius: 3px;
+            text-align: center;
+            font-family: 'Open Sans', sans-serif;
+        }
+        
+        .break {
+            position: relative;
+            margin: 0px;
+            padding: 0px;
+        }
+        
+        .dot {
+            display: inline-block;
+            margin-top: 5px;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+        
+        .dot-label {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-style: italic;
+        }
+        
+        a { color: black; }
+    </style>
 </head>
 <body>
-    <div id='title'>US COVID-19 Total Cases</div>
-    <div id='subtitle'>Proportional Symbols | 2020</div>
-    <div id='map'></div>
-    <div id='legend'></div>
+    <div id="map"></div>
+    <div id="title">COVID-19 Total Cases</div>
+    <div id="subtitle">United States, 2020</div>
+    <div id="legend"></div>
 
-    <script src="js/main.js"></script>
     <script>
-        mapboxgl.accessToken = 'pk.eyJ1IjoiYW1hcnR5YWNoYXViZSIsImEiOiJjbWhkeWRlczYwOGQxMnZwdjJyYWwydmhoIn0.gWwGNyVcD1xoO5v2UXrJ0Q';
+        // REPLACE WITH YOUR MAPBOX TOKEN
+        mapboxgl.accessToken = 'pk.eyJ1IjoiamFrb2J6aGFvIiwiYSI6ImNpcms2YWsyMzAwMmtmbG5icTFxZ3ZkdncifQ.P9MBej1xacybKcDNjehvw';
         
-        var map = new mapboxgl.Map({
+        let map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/light-v11',
-            center: [-98.5795, 39.8283],
-            zoom: 3.5
+            style: 'mapbox://styles/mapbox/light-v10',
+            zoom: 3.5,
+            center: [-98, 38.5],
+            projection: 'albers'
         });
+
+        // Proportional symbol grades
+        const grades = [1000, 10000, 50000, 100000, 200000];
+        const colors = ['#fdd49e', '#fc8d59', '#e34a33', '#b30000', '#7f0000'];
+        const radii = [3, 8, 15, 25, 40];
 
         map.on('load', () => {
             map.addSource('covid-counts', {
-                'type': 'geojson',
-                'data': 'assets/us-covid-2020-counts.geojson'
+                type: 'geojson',
+                data: 'assets/us-covid-2020-counts.geojson'
             });
-            
+
             map.addLayer({
-                'id': 'covid-counts-circles',
+                'id': 'covid-counts-point',
                 'type': 'circle',
                 'source': 'covid-counts',
                 'paint': {
                     'circle-radius': [
-                        'interpolate', ['linear'], ['sqrt'], ['get', 'total_cases'],
-                        0, 0,
-                        1000000, 25,
-                        5000000, 50
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'cases'],
+                        grades[0], radii[0],
+                        grades[1], radii[1],
+                        grades[2], radii[2],
+                        grades[3], radii[3],
+                        grades[4], radii[4]
                     ],
-                    'circle-color': '#f03b20',
+                    'circle-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'cases'],
+                        grades[0], colors[0],
+                        grades[1], colors[1],
+                        grades[2], colors[2],
+                        grades[3], colors[3],
+                        grades[4], colors[4]
+                    ],
                     'circle-stroke-color': 'white',
-                    'circle-stroke-width': 2,
-                    'circle-opacity': 0.8
+                    'circle-stroke-width': 1,
+                    'circle-opacity': 0.7
                 }
             });
 
-            map.on('click', 'covid-counts-circles', (e) => {
+            // Click event for popup
+            map.on('click', 'covid-counts-point', (e) => {
+                const props = e.features[0].properties;
                 new mapboxgl.Popup()
-                    .setLngLat(e.lngLat)
+                    .setLngLat(e.features[0].geometry.coordinates)
                     .setHTML(`
-                        <strong>${e.features[0].properties.NAME}</strong><br>
-                        Total cases: ${e.features[0].properties.total_cases.toLocaleString()}<br>
-                        Rate per 1k: ${e.features[0].properties.rate_per_100k?.toFixed(1) || 'N/A'}
+                        <strong>${props.county}, ${props.state}</strong><br>
+                        Cases: ${props.cases.toLocaleString()}<br>
+                        Deaths: ${props.deaths.toLocaleString()}
                     `)
                     .addTo(map);
             });
-            
-            map.on('mouseenter', 'covid-counts-circles', () => { map.getCanvas().style.cursor = 'pointer'; });
-            map.on('mouseleave', 'covid-counts-circles', () => { map.getCanvas().style.cursor = ''; });
-            
-            addProportionalLegend();
+
+            map.on('mouseenter', 'covid-counts-point', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            map.on('mouseleave', 'covid-counts-point', () => {
+                map.getCanvas().style.cursor = '';
+            });
         });
+
+        // Create legend
+        const legend = document.getElementById('legend');
+        let labels = '<strong>Cases</strong><br>';
+        
+        for (let i = 0; i < grades.length; i++) {
+            const dotRadius = 2 * radii[i];
+            labels += 
+                '<p class="break">' +
+                '<i class="dot" style="background:' + colors[i] + 
+                '; width: ' + dotRadius + 'px; height: ' + dotRadius + 'px"></i>' +
+                '<span class="dot-label" style="top: ' + (dotRadius / 2) + 'px">' + 
+                (grades[i] / 1000) + 'K</span></p>';
+        }
+        
+        labels += '<p style="text-align: right; font-size:10pt">Source: <a href="https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html">NY Times</a></p>';
+        legend.innerHTML = labels;
     </script>
 </body>
 </html>
