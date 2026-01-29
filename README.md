@@ -3,8 +3,8 @@
 ## Overview
 Interactive web maps visualizing US COVID-19 impact in 2020 using Leaflet:
 
-- **[map1.html](https://AjaxKronus.github.io/us-covid-19-mapping-2020/map1.html)**: Choropleth map of infection rates (cases per 100k population) by state.
-- **[map2.html](https://AjaxKronus.github.io/us-covid-19-mapping-2020/map2.html)**: Proportional symbol map of total confirmed cases by state.
+- **[map1.html](map1.html)**: Choropleth map of infection rates (cases per 100k population) by state.
+- **[map2.html](map1.html)**: Proportional symbol map of total confirmed cases by state.
 
 ![Map 1 - COVID Rates Choropleth](img/map1-screenshot.png)
 ![Map 2 - COVID Cases Proportional Symbols](img/map2-screenshot.png)
